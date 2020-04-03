@@ -1,4 +1,4 @@
-script.on_load(function(event)
+-- script.on_load(function(event)
 
 
-end)
+-- end)
