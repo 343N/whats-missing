@@ -80,22 +80,10 @@ script.on_event(defines.events.on_gui_click, function(event)
 end)
 
 script.on_nth_tick(120, function(event)
-    -- refreshLogisticNetworks()
     checkGUIExistence()
 end)
 
 
-function refreshLogisticNetworks()
-    -- if (table_size(unfulfilled_requests) == 0) then
-    --     for k, v in pairs(game.forces) do
-    --         if (v.logistic_networks and table_size(v.logistic_networks) > 0) then
-    --             -- game.print("LOGISTIC NETWORK FOUMD POG")
-    --             logistic_networks[k] = v.logistic_networks
-    --         end
-    --     end
-    -- end
-
-end
 
 function checkGUIExistence()
     for k, ply in pairs(game.players) do
@@ -118,7 +106,6 @@ function checkGUIExistence()
 end
 
 function updateGUI(player, gui)
-    player.print("Hello!")
     if (not gui['whats-missing-gui'] or not gui['whats-missing-gui'].valid) then
         return
     end
@@ -127,17 +114,18 @@ function updateGUI(player, gui)
 
     local label
 
-    if (not player.character) then
+    -- if (not player.character) then
 
-        label = scrollPane.add {
-            name = 'label',
-            caption = "You need to be a character, not god! :(",
-            type = "label"
-        }
-    end
-    local network = player.character.logistic_network
+    --     label = scrollPane.add {
+    --         name = 'label',
+    --         caption = "You need to be a character, not god! :(",
+    --         type = "label"
+    --     }
+    -- end
+
+
+    local network = player.surface.find_logistic_network_by_position(player.position, player.force)
     if (not network) then
-
         label = scrollPane.add {
             name = 'label',
             caption = "You're not in a logistics network! :(",
@@ -208,8 +196,6 @@ function updateLogisticNetworkRequests(ln)
 
     for k, v in pairs(ln.requester_points) do
         if (v.owner.name ~= "character") then
-            -- __DebugAdapter.print(v.owner.name)
-            -- if ()
             if (v.filters and table_size(v.filters) > 0) then
                 for k2, v2 in pairs(v.filters) do
                     local count = v2.count
@@ -239,9 +225,11 @@ function buildGUIList(player, basegui, network)
         local itemsprite = itemflow.add({name=k..'-sprite', type='sprite'})
         local itemlabel = itemflow.add({name='itemlabel', type='label', caption = {"", itemProto.localised_name, '\nMissing: ' .. v}})
 
+        itemflow.style.vertical_align = "center"
         itemsprite.sprite = 'item/' .. k
         itemlabel.style.single_line = false
         itemlabel.style.vertical_align = "center"
+        local line = basegui.add({type="line", direction="horizontal"})
         
     end
 end
