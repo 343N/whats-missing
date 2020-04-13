@@ -1,6 +1,7 @@
 require("mod-gui")
 
 local unfulfilled_requests = {}
+local NEWVERSION = false
 
 script.on_configuration_changed(function() 
     for k,v in pairs(game.players) do
@@ -92,10 +93,11 @@ function checkGUIExistence()
         if (not buttonFlow['whats-missing-button']) then
             -- local button = gui.add()
             buttonFlow.add {
-                type = 'sprite-button',
-                name = 'whats-missing-button',
-                sprite = 'whats-missing-button',
-                tooltip = "What's Missing?\nShow what's being requested and not fulfilled in your logistics network.",
+                type =      'sprite-button',
+                style =     'mod_gui_button',
+                name =      'whats-missing-button',
+                sprite =    'whats-missing-button',
+                tooltip =   "What's Missing?\nShow what's being requested and \nnot fulfilled in your logistics network.",
                 -- caption = "What's Missing?\nShow what's being requested and not fulfilled in your logistics network."
             }
 
@@ -104,6 +106,10 @@ function checkGUIExistence()
     end
 
 end
+
+script.on_configuration_changed(function(event)
+
+end)
 
 function updateGUI(player, gui)
     if (not gui['whats-missing-gui'] or not gui['whats-missing-gui'].valid) then
