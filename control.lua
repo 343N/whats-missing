@@ -38,7 +38,7 @@ script.on_event(defines.events.on_gui_click, function(event)
                                     {
                 name = "frame",
                 type = "frame",
-                style = "image_frame",
+                style = "dark_frame",
                 direction = "vertical"
             })
         local scrollPane = scrollPaneFrame.add(
@@ -190,6 +190,7 @@ function logisticNetworkHasRequests(ln)
     for k, v in pairs(ln.requester_points) do
         if (v.owner.name ~= "character") then
             -- __DebugAdapter.print(v.owner.name)
+            if (v.filters == nil) then return false end;
             if (table_size(v.filters) > 0) then return true end
         end
     end
