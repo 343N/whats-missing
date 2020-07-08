@@ -233,8 +233,7 @@ function logisticNetworkHasRequests(ln)
     for k, v in pairs(ln.requester_points) do
         if (v.owner.name ~= "character") then
             -- __DebugAdapter.print(v.owner.name)
-            if (v.filters == nil) then return false end
-            if (table_size(v.filters) > 0) then return true end
+            if (v.filters ~= nil and table_size(v.filters) > 0) then return true end
         end
     end
     return false
