@@ -19,8 +19,6 @@ script.on_configuration_changed(function(event)
         end
     end
     global.plySettings = global.plySettings or {}
-    game.print("Refreshed 'What's Missing'")
-    print("CONFIG CHANGED LOL")
 end)
 
 local defaultSettings = {
@@ -317,7 +315,9 @@ function updateLogisticNetworkRequests(ln)
 
     local ln_tbl = unfulfilled_requests[ln]
     for k,v in pairs(ln.get_contents()) do
-        ln_tbl[k] = ln_tbl[k] - v
+        if (ln_tbl[k]) then
+            ln_tbl[k] = ln_tbl[k] - v
+        end
     end
 end
 
