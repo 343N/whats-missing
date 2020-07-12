@@ -10,22 +10,24 @@ local buttonQueue = {}
 --     global.plySettings = global.plySettings or {}
 
 -- end)
-script.on_configuration_changed(function()
+script.on_configuration_changed(function(event)
     for k, v in pairs(game.players) do
         local flow = mod_gui.get_button_flow(v)
         local button = flow['whats-missing-button']
         if (button and button.valid) then
             button.destroy()
         end
-        global.plySettings = global.plySettings or {}
     end
+    global.plySettings = global.plySettings or {}
+    game.print("Refreshed 'What's Missing'")
+    print("CONFIG CHANGED LOL")
 end)
 
 local defaultSettings = {
     includeBuffer = true
 }
 
-script.on_init(function()
+script.on_init(function(event)
     global.plySettings = global.plySettings or {}
 end)
 
@@ -173,9 +175,6 @@ function checkGUIExistence()
     end
 
 end
-
-script.on_configuration_changed(function(event)
-end)
 
 function updateGUI(player, gui)
     if (not gui['whats-missing-gui'] or not gui['whats-missing-gui'].valid) then
