@@ -1,14 +1,32 @@
 require("mod-gui")
+require('util')
 
 local unfulfilled_requests = {}
-local NEWVERSION = false
+local bufferRequests = {}
+local buttonQueue = {}
 
+-- global.plySettings = global.plySettings or {}
+-- script.on_load(function()
+--     global.plySettings = global.plySettings or {}
+
+-- end)
 script.on_configuration_changed(function()
     for k, v in pairs(game.players) do
         local flow = mod_gui.get_button_flow(v)
         local button = flow['whats-missing-button']
-        if (button and button.valid) then button.destroy() end
+        if (button and button.valid) then
+            button.destroy()
+        end
+        global.plySettings = global.plySettings or {}
     end
+end)
+
+local defaultSettings = {
+    includeBuffer = true
+}
+
+script.on_init(function()
+    global.plySettings = global.plySettings or {}
 end)
 
 script.on_event(defines.events.on_gui_click, function(event)
@@ -17,69 +35,76 @@ script.on_event(defines.events.on_gui_click, function(event)
     local ply = game.players[event.player_index]
 
     if (button.name == 'whats-missing-button') then
-        if (ply.gui.screen['whats-missing-gui'] and
-            ply.gui.screen['whats-missing-gui'].valid) then
+        if (ply.gui.screen['whats-missing-gui'] and ply.gui.screen['whats-missing-gui'].valid) then
             ply.gui.screen['whats-missing-gui'].destroy()
             return
         end
         -- game.print("Hello!")
-        local frame = ply.gui.screen.add(
-                          {
-                name = "whats-missing-gui",
-                type = "frame",
-                caption = "What's Missing?",
-                direction = "vertical",
-                -- style="window"
-            })
+        local frame = ply.gui.screen.add({
+            name = "whats-missing-gui",
+            type = "frame",
+            caption = "What's Missing?",
+            direction = "vertical"
+            -- style="window"
+        })
         local WIDTH = 400 + 25;
-        local HEIGHT = 200 + 150;
+        local HEIGHT = 200 + 170;
         local res = ply.display_resolution
         local scl = ply.display_scale
         local labelFrame = frame.add({
-                name="labelFrame",
-                type="frame",
-                style="inside_shallow_frame"
+            name = "labelFrame",
+            type = "frame",
+            style = "inside_shallow_frame"
         })
         setGUISize(labelFrame, WIDTH - 25, 28);
-        
+
         labelFrame.style.vertical_align = "center";
         labelFrame.style.top_padding = 4
         labelFrame.style.bottom_padding = 4
 
-        local scrollPaneFrame = frame.add(
-                                    {
-                name = "frame",
-                type = "frame",
-                style = "inside_shallow_frame",
-                direction = "vertical"
-            })
-
-        local scrollPaneInnerFrame = scrollPaneFrame.add(
-            {
-                name = "innerFrame",
-                type = "frame",
-                style = "filter_scroll_pane_background_frame",
-                direction = "vertical"
+        local scrollPaneFrame = frame.add({
+            name = "frame",
+            type = "frame",
+            style = "inside_shallow_frame",
+            direction = "vertical"
         })
-        local scrollPane = scrollPaneInnerFrame.add(
-                               {
-                name = "scrollpane", 
-                type = "scroll-pane"
-                --style="filter_scroll_pane"
-            })
-        local contentTable = scrollPane.add(
-                                 {
-                name = "itemTable",
-                type = "table",
-                style = "slot_table",
-                column_count = 10
-            })
+
+        local scrollPaneInnerFrame = scrollPaneFrame.add({
+            name = "innerFrame",
+            type = "frame",
+            style = "filter_scroll_pane_background_frame",
+            direction = "vertical"
+        })
+        local scrollPane = scrollPaneInnerFrame.add({
+            name = "scrollpane",
+            type = "scroll-pane"
+            -- style="filter_scroll_pane"
+        })
+        local contentTable = scrollPane.add({
+            name = "itemTable",
+            type = "table",
+            style = "slot_table",
+            column_count = 10
+        })
+
+        local bufferCheck = frame.add({
+            name = "bufferIncludeCheckbox",
+            type = 'checkbox',
+            caption = "Include requests from buffer chests.",
+            state = true
+        })
+        if (global.plySettings[ply.index]) then 
+            bufferCheck.state = global.plySettings[ply.index].includeBuffer 
+        end
+
+        setGUISize(bufferCheck, nil, 20)
 
         local refreshButton = frame.add({
             name = "whats-missing-refresh",
             type = "button",
             caption = "Refresh"
         })
+
         local closeButton = frame.add({
             name = "whats-missing-close",
             type = "button",
@@ -110,18 +135,23 @@ script.on_event(defines.events.on_gui_click, function(event)
 
         updateGUI(ply, ply.gui.screen)
 
-    elseif (button.name == "whats-missing-close" and
-        ply.gui.screen['whats-missing-gui'] and
+    elseif (button.name == "whats-missing-close" and ply.gui.screen['whats-missing-gui'] and
         ply.gui.screen['whats-missing-gui'].valid) then
         ply.gui.screen['whats-missing-gui'].destroy()
 
     elseif (button.name == 'whats-missing-refresh') then
         updateGUI(ply, ply.gui.screen)
+    elseif (button.name == 'bufferIncludeCheckbox') then
+        global.plySettings[ply.index] = global.plySettings[ply.index] or {}
+        global.plySettings[ply.index].includeBuffer = button.state
+        updateGUI(ply, ply.gui.screen)
     end
 
 end)
 
-script.on_nth_tick(120, function(event) checkGUIExistence() end)
+script.on_nth_tick(120, function(event)
+    checkGUIExistence()
+end)
 
 function checkGUIExistence()
     for k, ply in pairs(game.players) do
@@ -144,14 +174,15 @@ function checkGUIExistence()
 
 end
 
-script.on_configuration_changed(function(event) end)
+script.on_configuration_changed(function(event)
+end)
 
 function updateGUI(player, gui)
     if (not gui['whats-missing-gui'] or not gui['whats-missing-gui'].valid) then
         return
     end
     local scrollPane = gui['whats-missing-gui']['frame']['innerFrame']['scrollpane']
-    -- scrollPane.clear()
+    scrollPane['itemTable'].clear()
     local frame = gui['whats-missing-gui']['labelFrame'];
 
     local label
@@ -165,16 +196,17 @@ function updateGUI(player, gui)
     --     }
     -- end
 
-    local network = player.surface.find_logistic_network_by_position(
-                        player.position, player.force)
-    if (frame['label'] and frame['label'].valid) then frame['label'].destroy() end
+    local network = player.surface.find_logistic_network_by_position(player.position, player.force)
+    if (frame['label'] and frame['label'].valid) then
+        frame['label'].destroy()
+    end
     if (not network) then
         label = frame.add {
             name = 'label',
             caption = "You're not in a logistics network! :(",
             type = "label"
         }
-    elseif (not logisticNetworkHasMembers(network)) then
+    elseif (not logisticNetworkHasMembers(network, player)) then
 
         label = frame.add {
             name = 'label',
@@ -182,21 +214,23 @@ function updateGUI(player, gui)
             type = "label"
         }
 
-    elseif (not logisticNetworkHasRequests(network)) then
+    elseif (not logisticNetworkHasRequests(network, player)) then
         label = frame.add {
             name = 'label',
             caption = "Your logistics network has no requests! :(",
             type = "label"
         }
-    elseif (logisticNetworkHasRequests(network)) then
+    elseif (logisticNetworkHasRequests(network, player)) then
         -- if (logistic)
+        lockButtons(player)
         updateLogisticNetworkRequests(network)
 
-        if (logisticNetworkHasUnfulfilledRequests(network)) then
+        if (logisticNetworkHasUnfulfilledRequests(network, player)) then
             buildGUIList(player, scrollPane, network)
             label = frame.add {
                 name = 'label',
-                caption = "You have " .. table_size(unfulfilled_requests[network]) .. " unfulfilled requests.",
+                    caption = "You have " .. table_size(getRelativeRequestTable(network, player)) ..
+                    " unfulfilled requests.",
                 type = "label"
             }
         else
@@ -215,25 +249,44 @@ function updateGUI(player, gui)
     end
 end
 
-function logisticNetworkHasMembers(ln)
+function logisticNetworkHasMembers(ln, ply)
     for k, v in pairs(ln.requester_points) do
-        if (v.owner.name ~= "character") then return true end
+        if (v.owner.name ~= "character") then
+            local incBuffers = (global.plySettings[ply.index] and global.plySettings[ply.index].includeBuffer)
+            local logicTest = incBuffers or (not incBuffers and v.owner.prototype.logistic_mode ~= 'buffer')
+            if (incBuffers or (not incBuffers and v.owner.prototype.logistic_mode ~= 'buffer')) then
+                return true
+            end
+        end
     end
     return false
 end
 
 function setGUISize(element, w, h)
-    if (not element.style) then return end
-    if (w) then element.style.width = w end
-    if (h) then element.style.height = h end
+    if (not element.style) then
+        return
+    end
+    if (w) then
+        element.style.width = w
+    end
+    if (h) then
+        element.style.height = h
+    end
 end
 
-function logisticNetworkHasRequests(ln)
+function logisticNetworkHasRequests(ln, player)
 
     for k, v in pairs(ln.requester_points) do
         if (v.owner.name ~= "character") then
             -- __DebugAdapter.print(v.owner.name)
-            if (v.filters ~= nil and table_size(v.filters) > 0) then return true end
+            local incBuffers = (global.plySettings[player.index] and global.plySettings[player.index].includeBuffer)
+            if (incBuffers or (not incBuffers and v.owner.prototype.logistic_mode ~= 'buffer')) then
+                if (v.filters ~= nil and table_size(v.filters) > 0) then
+                    return true
+                end
+            end
+
+            -- if (global.plySettings[player.index].includeBuffer and v.owner.logistic_mode == 'buffer')
         end
     end
     return false
@@ -245,29 +298,34 @@ function updateLogisticNetworkRequests(ln)
 
     for k, v in pairs(ln.requester_points) do
         if (v.owner.name ~= "character") then
-            if (v.filters and table_size(v.filters) > 0) then
+                if (v.filters and table_size(v.filters) > 0) then
                 for k2, v2 in pairs(v.filters) do
                     local count = v2.count
                     if (v.targeted_items_deliver[v2.name] ~= nil) then
                         count = count - v.targeted_items_deliver[v2.name]
                     end
-                    local networkCount = ln.get_item_count(v2.name)
+                    -- local networkCount = ln.get_item_count(v2.name)
                     local containerCount = v.owner.get_item_count(v2.name)
-                    count = count - networkCount - containerCount
+                    count = count - containerCount
 
                     if (count > 0) then
-                        addItemToUnfulfilledRequests(ln, v2.name, count)
+                        addItemToUnfulfilledRequests(ln, v, v2.name, count)
                     end
                 end
             end
         end
     end
+
+    local ln_tbl = unfulfilled_requests[ln]
+    for k,v in pairs(ln.get_contents()) do
+        ln_tbl[k] = ln_tbl[k] - v
+    end
 end
 
 function buildGUIList(player, basegui, network)
 
-    basegui['itemTable'].clear();
-    for k, v in pairs(unfulfilled_requests[network]) do
+    -- basegui['itemTable'].clear();
+    for k, v in pairs(getRelativeRequestTable(network, player)) do
         local itemProto = game.item_prototypes[k]
         -- local itemProto = game.item_prototypes[k].name
         -- local localeName = player.request_translation()
@@ -279,11 +337,15 @@ function buildGUIList(player, basegui, network)
 
         local itembutton = basegui['itemTable'].add({
             name = k .. "-spritebutton",
-            tooltip = {"", itemProto.localised_name, '\nMissing: ' .. v},
+            tooltip = {
+                "",
+                itemProto.localised_name,
+                '\nMissing: ' .. v
+            },
             count = v,
             number = v,
-            type="sprite-button",
-            style="slot_button",
+            type = "sprite-button",
+            style = "slot_button",
             sprite = 'item/' .. k
         })
         -- local itemsprite =
@@ -303,19 +365,90 @@ function buildGUIList(player, basegui, network)
     end
 end
 
-function addItemToUnfulfilledRequests(network, item, count)
-    if (not unfulfilled_requests[network]) then
-        unfulfilled_requests[network] = {}
-    end
+function addItemToUnfulfilledRequests(network, source, item, count)
+    unfulfilled_requests[network] = unfulfilled_requests[network] or {}
+
     local reqItem = unfulfilled_requests[network][item]
-    if (reqItem == nil) then
-        unfulfilled_requests[network][item] = count
-    else
-        unfulfilled_requests[network][item] = count + reqItem
+
+    unfulfilled_requests[network][item] = count + (reqItem or 0)
+
+    if (source.owner.prototype.logistic_mode == 'buffer') then
+        bufferRequests[network] = bufferRequests[network] or {}
+        local reqItemBuffer = bufferRequests[network][item]
+        bufferRequests[network][item] = count + (reqItemBuffer or 0)
     end
 end
 
-function logisticNetworkHasUnfulfilledRequests(network)
-    if (unfulfilled_requests[network] == nil) then return false end
-    return table_size(unfulfilled_requests[network]) > 0
+function logisticNetworkHasUnfulfilledRequests(network, player)
+    return not isEmptyTable(getRelativeRequestTable(network, player))
 end
+
+function getRequestsMinusBuffer(network)
+    local diffTable = {}
+    if (not bufferRequests[network]) then
+        return unfulfilled_requests[network]
+    end
+    for k, v in pairs(bufferRequests[network]) do
+        diffTable = util.copy(unfulfilled_requests[network])
+        if (bufferRequests[network][k]) then
+            diffTable[k] = diffTable[k] - bufferRequests[network][k]
+        end
+        if (diffTable[k] == 0) then
+            table.remove(diffTable, k)
+        end
+    end
+    return diffTable
+end
+
+function getRelativeRequestTable(network, ply)
+        local settings = global.plySettings[ply.index]
+        local returnResult = (not settings or settings.includeBuffer) and unfulfilled_requests[network] or getRequestsMinusBuffer(network)
+    return returnResult
+end
+
+function isEmptyTable(tbl)
+    return table_size(purgeTable(tbl)) == 0
+end
+
+-- Purges keys in table with 0
+function purgeTable(tbl)
+    for k, v in pairs(tbl) do
+        if (v == 0) then
+            table.remove(tbl, k)
+        end
+    end
+
+    return tbl
+end
+
+function unlockButtons(ply)
+    if (ply.gui.screen['whats-missing-gui'] and ply.gui.screen['whats-missing-gui'].valid) then
+        local bufferCheckbox = ply.gui.screen['whats-missing-gui']['bufferIncludeCheckbox']
+        local refreshButton = ply.gui.screen['whats-missing-gui']['whats-missing-refresh']
+        refreshButton.enabled = true
+        bufferCheckbox.enabled = true
+    end
+end
+
+function lockButtons(ply)
+    if (ply.gui.screen['whats-missing-gui'] and ply.gui.screen['whats-missing-gui'].valid) then
+        if (not __DebugAdapter) then
+            local bufferCheckbox = ply.gui.screen['whats-missing-gui']['bufferIncludeCheckbox']
+            local refreshButton = ply.gui.screen['whats-missing-gui']['whats-missing-refresh']
+            refreshButton.enabled = false
+            bufferCheckbox.enabled = false
+            buttonQueue[ply.index] = game.tick + 60
+        end
+    end
+end
+
+function processQueue()
+    for k,v in pairs(buttonQueue) do
+        if (game.tick > v) then
+            unlockButtons(game.players[k])
+            table.remove(buttonQueue, k)
+        end
+    end
+end
+
+script.on_nth_tick(3, processQueue)
