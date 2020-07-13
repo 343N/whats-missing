@@ -314,8 +314,12 @@ function updateLogisticNetworkRequests(ln)
     end
 
     local ln_tbl = unfulfilled_requests[ln]
-    for k,v in pairs(ln.get_contents()) do
-        if (ln_tbl[k]) then
+    local networkContents = ln.get_contents()
+    -- max positive int
+    local maxcount = 2147483647
+
+    for k,v in pairs(networkContents) do
+        if (ln_tbl[k] and v < maxcount) then
             ln_tbl[k] = ln_tbl[k] - v
         end
     end
