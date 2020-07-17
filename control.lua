@@ -302,8 +302,10 @@ function updateLogisticNetworkRequests(ln)
                         count = count - v.targeted_items_deliver[v2.name]
                     end
                     -- local networkCount = ln.get_item_count(v2.name)
-                    local containerCount = v.owner.get_item_count(v2.name)
-                    count = count - containerCount
+                    if (v.owner.prototype.logistic_mode ~= 'buffer') then
+                        local containerCount = v.owner.get_item_count(v2.name)
+                        count = count - containerCount
+                    end
 
                     if (count > 0) then
                         addItemToUnfulfilledRequests(ln, v, v2.name, count)
@@ -391,13 +393,13 @@ function getRequestsMinusBuffer(network)
     if (not bufferRequests[network]) then
         return unfulfilled_requests[network]
     end
+    diffTable = util.copy(unfulfilled_requests[network])
     for k, v in pairs(bufferRequests[network]) do
-        diffTable = util.copy(unfulfilled_requests[network])
         if (bufferRequests[network][k]) then
-            diffTable[k] = diffTable[k] - bufferRequests[network][k]
+            diffTable[k] = math.max(diffTable[k] - bufferRequests[network][k], 0)
         end
         if (diffTable[k] == 0) then
-            table.remove(diffTable, k)
+            diffTable[k] = nil
         end
     end
     return diffTable
@@ -417,7 +419,7 @@ end
 function purgeTable(tbl)
     for k, v in pairs(tbl) do
         if (v == 0) then
-            table.remove(tbl, k)
+            tbl.k = nil
         end
     end
 
