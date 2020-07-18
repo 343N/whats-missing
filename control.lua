@@ -4,6 +4,7 @@ require('util')
 local unfulfilled_requests = {}
 local bufferRequests = {}
 local buttonQueue = {}
+local all_requests = {}
 
 -- global.plySettings = global.plySettings or {}
 -- script.on_load(function()
@@ -292,12 +293,14 @@ end
 function updateLogisticNetworkRequests(ln)
 
     unfulfilled_requests[ln] = {}
+    -- all_requests[ln] = {}
 
     for k, v in pairs(ln.requester_points) do
         if (v.owner.name ~= "character") then
                 if (v.filters and table_size(v.filters) > 0) then
                 for k2, v2 in pairs(v.filters) do
                     local count = v2.count
+                    -- all_requests[ln][v2.name] = count + (all_requests[ln][v2.name] or 0)
                     if (v.targeted_items_deliver[v2.name] ~= nil) then
                         count = count - v.targeted_items_deliver[v2.name]
                     end
@@ -323,6 +326,7 @@ function updateLogisticNetworkRequests(ln)
     for k,v in pairs(networkContents) do
         if (ln_tbl[k] and v < maxcount) then
             ln_tbl[k] = ln_tbl[k] - v
+            if (ln_tbl[k] <= 0) then ln_tbl[k] = nil end
         end
     end
 end
