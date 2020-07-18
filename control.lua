@@ -48,7 +48,7 @@ script.on_event(defines.events.on_gui_click, function(event)
             direction = "vertical"
             -- style="window"
         })
-        local WIDTH = 400 + 25;
+        local WIDTH = 412 + 25;
         local HEIGHT = 200 + 170;
         local res = ply.display_resolution
         local scl = ply.display_scale
@@ -70,21 +70,23 @@ script.on_event(defines.events.on_gui_click, function(event)
             direction = "vertical"
         })
 
-        local scrollPaneInnerFrame = scrollPaneFrame.add({
+        local scrollPane = scrollPaneFrame.add({
+            name = "scrollpane",
+            type = "scroll-pane",
+            vertical_scroll_policy = "always",
+            horizontal_scroll_policy = "never"
+            -- style="filter_scroll_pane"
+        })
+        local scrollPaneInnerFrame = scrollPane.add({
             name = "innerFrame",
             type = "frame",
             style = "filter_scroll_pane_background_frame",
             direction = "vertical"
         })
-        local scrollPane = scrollPaneInnerFrame.add({
-            name = "scrollpane",
-            type = "scroll-pane"
-            -- style="filter_scroll_pane"
-        })
-        local contentTable = scrollPane.add({
+        local contentTable = scrollPaneInnerFrame.add({
             name = "itemTable",
             type = "table",
-            style = "slot_table",
+            style = "filter_slot_table",
             column_count = 10
         })
 
@@ -94,8 +96,8 @@ script.on_event(defines.events.on_gui_click, function(event)
             caption = "Include requests from buffer chests.",
             state = true
         })
-        if (global.plySettings[ply.index]) then 
-            bufferCheck.state = global.plySettings[ply.index].includeBuffer 
+        if (global.plySettings[ply.index]) then
+            bufferCheck.state = global.plySettings[ply.index].includeBuffer
         end
 
         setGUISize(bufferCheck, nil, 20)
@@ -115,15 +117,22 @@ script.on_event(defines.events.on_gui_click, function(event)
         local SIDE_PADDING = 8
         -- scrollPaneFrame.style.left_padding = SIDE_PADDING
         -- scrollPaneFrame.style.right_padding = SIDE_PADDING
-        scrollPaneFrame.style.width = 400
-        scrollPaneInnerFrame.style.width = 400
+        scrollPaneFrame.style.width = WIDTH - 25
+        scrollPaneInnerFrame.style.width = WIDTH - 25
+        -- scrollPaneInnerFrame.style.padding = 0
+        local rowcount = 5
         scrollPaneInnerFrame.style.padding = 0
         scrollPaneFrame.style.left_padding = 0
         scrollPaneFrame.style.right_padding = 0
         frame.style.width = WIDTH
         frame.style.height = HEIGHT
         scrollPaneFrame.style.width = WIDTH - 25
-        scrollPaneFrame.style.height = 200
+        scrollPaneFrame.style.height = rowcount * 40
+        scrollPane.style.height = rowcount * 40
+        scrollPane.style.extra_top_padding_when_activated = 0
+        scrollPane.style.extra_bottom_padding_when_activated = 0
+        scrollPane.style.extra_left_padding_when_activated = 0
+        scrollPane.style.extra_right_padding_when_activated = 0
         -- scrollPane.style.width = WIDTH - 25 - (12 * 2);
         -- scrollPane.style.width = HEIGHT - 175 - 8;
         scrollPane.style.horizontal_align = "center"
@@ -150,7 +159,7 @@ script.on_event(defines.events.on_gui_click, function(event)
 
 end)
 
-script.on_nth_tick(120, function(event)
+script.on_nth_tick(60, function(event)
     checkGUIExistence()
 end)
 
@@ -179,7 +188,7 @@ function updateGUI(player, gui)
     if (not gui['whats-missing-gui'] or not gui['whats-missing-gui'].valid) then
         return
     end
-    local scrollPane = gui['whats-missing-gui']['frame']['innerFrame']['scrollpane']
+    local scrollPane = gui['whats-missing-gui']['frame']['scrollpane']['innerFrame']
     scrollPane['itemTable'].clear()
     local frame = gui['whats-missing-gui']['labelFrame'];
 
@@ -227,7 +236,7 @@ function updateGUI(player, gui)
             buildGUIList(player, scrollPane, network)
             label = frame.add {
                 name = 'label',
-                    caption = "You have " .. table_size(getRelativeRequestTable(network, player)) ..
+                caption = "You have " .. table_size(getRelativeRequestTable(network, player)) ..
                     " unfulfilled requests.",
                 type = "label"
             }
@@ -297,7 +306,7 @@ function updateLogisticNetworkRequests(ln)
 
     for k, v in pairs(ln.requester_points) do
         if (v.owner.name ~= "character") then
-                if (v.filters and table_size(v.filters) > 0) then
+            if (v.filters and table_size(v.filters) > 0) then
                 for k2, v2 in pairs(v.filters) do
                     local count = v2.count
                     -- all_requests[ln][v2.name] = count + (all_requests[ln][v2.name] or 0)
@@ -323,10 +332,12 @@ function updateLogisticNetworkRequests(ln)
     -- max positive int
     local maxcount = 2147483647
 
-    for k,v in pairs(networkContents) do
+    for k, v in pairs(networkContents) do
         if (ln_tbl[k] and v < maxcount) then
             ln_tbl[k] = ln_tbl[k] - v
-            if (ln_tbl[k] <= 0) then ln_tbl[k] = nil end
+            if (ln_tbl[k] <= 0) then
+                ln_tbl[k] = nil
+            end
         end
     end
 end
@@ -343,9 +354,8 @@ function buildGUIList(player, basegui, network)
         --     type = "flow",
         --     direction = "horizontal"
         -- })
-
         local itembutton = basegui['itemTable'].add({
-            name = k .. "-spritebutton",
+            name = k .. "-spritebutton-",
             tooltip = {
                 "",
                 itemProto.localised_name,
@@ -357,6 +367,7 @@ function buildGUIList(player, basegui, network)
             style = "slot_button",
             sprite = 'item/' .. k
         })
+
         -- local itemsprite =
         --     itemflow.add({name = k .. '-sprite', type = 'sprite'})
         -- local itemlabel = itemflow.add({
@@ -399,7 +410,7 @@ function getRequestsMinusBuffer(network)
     end
     diffTable = util.copy(unfulfilled_requests[network])
     for k, v in pairs(bufferRequests[network]) do
-        if (bufferRequests[network][k]) then
+        if (bufferRequests[network][k] and diffTable[k]) then
             diffTable[k] = math.max(diffTable[k] - bufferRequests[network][k], 0)
         end
         if (diffTable[k] == 0) then
@@ -410,8 +421,9 @@ function getRequestsMinusBuffer(network)
 end
 
 function getRelativeRequestTable(network, ply)
-        local settings = global.plySettings[ply.index]
-        local returnResult = (not settings or settings.includeBuffer) and unfulfilled_requests[network] or getRequestsMinusBuffer(network)
+    local settings = global.plySettings[ply.index]
+    local returnResult = (not settings or settings.includeBuffer) and unfulfilled_requests[network] or
+                             getRequestsMinusBuffer(network)
     return returnResult
 end
 
@@ -452,7 +464,7 @@ function lockButtons(ply)
 end
 
 function processQueue()
-    for k,v in pairs(buttonQueue) do
+    for k, v in pairs(buttonQueue) do
         if (game.tick > v) then
             unlockButtons(game.players[k])
             table.remove(buttonQueue, k)
