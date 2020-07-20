@@ -1,10 +1,10 @@
 {
     "name": "whats-missing",
-    "version": "0.1.11",
+    "version": "0.1.12",
     "title": "What's Missing?",
     "author": "343N",
-    "contact": "",
-    "homepage": "",
+    "contact": "343N#6969",
+    "homepage": "http://github.com/343N/whats-missing",
     "factorio_version": "0.18",
     "dependencies": ["base >= 0.18"],
     "description": "Here, I'll show you.."
