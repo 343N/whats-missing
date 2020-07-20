@@ -178,7 +178,7 @@ function checkGUIExistence()
                 style = 'mod_gui_button',
                 name = 'whats-missing-button',
                 sprite = 'whats-missing-button',
-                tooltip = {"modguibutton-tooltip", "What's Missing?"}
+                tooltip = {"whats-missing.modguibutton-tooltip", "What's Missing?"}
                 -- caption = "What's Missing?\nShow what's being requested and not fulfilled in your logistics network."
             }
 
@@ -359,11 +359,7 @@ function buildGUIList(player, basegui, network)
         -- })
         local itembutton = basegui['itemTable'].add({
             name = k .. "-spritebutton-",
-            tooltip = {
-                "",
-                itemProto.localised_name,
-                '\nMissing: ' .. v
-            },
+            tooltip = {"whats-missing.item-table-button", itemProto.localised_name, v },
             count = v,
             number = v,
             type = "sprite-button",
