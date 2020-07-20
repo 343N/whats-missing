@@ -97,7 +97,7 @@ script.on_event(defines.events.on_gui_click, function(event)
         local bufferCheck = frame.add({
             name = "bufferIncludeCheckbox",
             type = 'checkbox',
-            caption = "Include requests from buffer chests.",
+            caption = {"whats-missing.include-buffer-chests-label"},
             state = true
         })
         if (global.plySettings[ply.index]) then
@@ -109,13 +109,13 @@ script.on_event(defines.events.on_gui_click, function(event)
         local refreshButton = frame.add({
             name = "whats-missing-refresh",
             type = "button",
-            caption = "Refresh"
+            caption = {"whats-missing.refresh-button"}
         })
 
         local closeButton = frame.add({
             name = "whats-missing-close",
             type = "button",
-            caption = "Close"
+            caption = {"whats-missing.close-button"}
         })
         -- scrollPaneInnerFrame.style.padding = 10
         local SIDE_PADDING = 8
@@ -178,7 +178,7 @@ function checkGUIExistence()
                 style = 'mod_gui_button',
                 name = 'whats-missing-button',
                 sprite = 'whats-missing-button',
-                tooltip = "What's Missing?\nShow what's being requested and \nnot fulfilled in your logistics network."
+                tooltip = {"modguibutton-tooltip", "What's Missing?"}
                 -- caption = "What's Missing?\nShow what's being requested and not fulfilled in your logistics network."
             }
 
@@ -214,21 +214,21 @@ function updateGUI(player, gui)
     if (not network) then
         label = frame.add {
             name = 'label',
-            caption = "You're not in a logistics network! :(",
+            caption = {"whats-missing.no-network", ":("},
             type = "label"
         }
     elseif (not logisticNetworkHasMembers(network, player)) then
 
         label = frame.add {
             name = 'label',
-            caption = "Your logistics network has no requester points! :(",
+            caption = {"whats-missing.no-requesters", ":("},
             type = "label"
         }
 
     elseif (not logisticNetworkHasRequests(network, player)) then
         label = frame.add {
             name = 'label',
-            caption = "Your logistics network has no requests! :(",
+            caption = {"whats-missing.no-requests", ":("},
             type = "label"
         }
     elseif (logisticNetworkHasRequests(network, player)) then
@@ -240,14 +240,13 @@ function updateGUI(player, gui)
             buildGUIList(player, scrollPane, network)
             label = frame.add {
                 name = 'label',
-                caption = "You have " .. table_size(getRelativeRequestTable(network, player)) ..
-                    " unfulfilled requests.",
+                caption = {"whats-missing.unfulfilled-request-count", table_size(getRelativeRequestTable(network, player))},
                 type = "label"
             }
         else
             label = frame.add {
                 name = 'label',
-                caption = "Your logistics network has no unfulfilled requests! :(",
+                caption = {"whats-missing.no-unfulfilled-requests", ":)"},
                 type = "label"
             }
         end
