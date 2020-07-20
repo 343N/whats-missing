@@ -52,6 +52,10 @@ script.on_event(defines.events.on_gui_click, function(event)
         local HEIGHT = 200 + 170;
         local res = ply.display_resolution
         local scl = ply.display_scale
+        frame.location = {
+            (res.width / 2) - ((WIDTH / 2) * scl),
+            (res.height / 2) - ((HEIGHT / 2) * scl)
+        }
         local labelFrame = frame.add({
             name = "labelFrame",
             type = "frame",
