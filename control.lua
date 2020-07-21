@@ -178,7 +178,7 @@ function checkGUIExistence()
                 style = 'mod_gui_button',
                 name = 'whats-missing-button',
                 sprite = 'whats-missing-button',
-                tooltip = {"whats-missing.modguibutton-tooltip", "What's Missing?"}
+                tooltip = {"whats-missing.modguibutton-tooltip", {"mod-name.whats-missing"}}
                 -- caption = "What's Missing?\nShow what's being requested and not fulfilled in your logistics network."
             }
 
